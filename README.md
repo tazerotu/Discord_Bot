@@ -1,28 +1,94 @@
 # Discord Bot Collection
 
-This repository contains several independent Discord bot projects built with JavaScript and `discord.js`. Each folder is its own bot with a different purpose, so the repo acts more like a collection of experiments and utilities than a single application.
+A collection of independent Discord bots built with JavaScript and [discord.js](https://discord.js.org/). Each bot lives in its own directory, has its own dependencies, and can be installed and run separately.
 
-## Repository overview
+> **Important:** The repository root is not one single deployable application. Choose a bot directory before installing dependencies or starting a bot.
 
-- `wynncraft 2/` — the most complete and active project; a Wynncraft server tracker and event bot with slash commands, live polling, and optional pinned tracker messages.
-- `Wynncraft/` — earlier Wynncraft-focused bot experiments and utilities.
-- `Warframe/` — Warframe helper bot for relic data, drop locations, and market price lookups.
-- `DGA/` — a simpler Discord bot that welcomes members and responds to basic commands.
+## Contents
 
-## What's in this repo?
+- [Projects](#projects)
+- [Requirements](#requirements)
+- [Discord application setup](#discord-application-setup)
+- [Running a bot](#running-a-bot)
+- [Security](#security)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
 
-### 1) Wynncraft bot (`wynncraft 2`)
+## Projects
 
-This is the flagship project in the repo.
+### `wynncraft 2` — Wynncraft world-events bot
 
-Features:
-- live Wynncraft world event tracking
-- region filtering (`US`, `EU`, `AS`)
-- slash commands such as `/events`, `/search`, `/server`, and `/profspots`
-- optional pinned tracker message that auto-refreshes in a Discord channel
-- profession gathering spot recommendations
+The most complete project in this repository. It tracks Wynncraft world events across servers and regions, then exposes the information through Discord slash commands.
 
-Suggested setup:
+Features include:
+
+- World-event and server tracking through the Wynncraft Public API
+- Region views for US, EU, and AS servers
+- Slash commands including `/events`, `/search`, `/server`, `/region`, `/settracker`, and `/stoptracker`
+- An optional pinned tracker message that refreshes automatically
+- Profession gathering-spot recommendations
+
+See the dedicated [Wynncraft bot README](wynncraft%202/README.md) for the full command reference, Discord permissions, API notes, and customization details.
+
+### `Warframe` — Warframe lookup bot
+
+A prefix-command bot for Warframe relics and items. It combines data from the Warframe Wiki and Warframe.market and returns formatted Discord embeds.
+
+Available commands:
+
+- `!relic <name>` — relic drops, rarity chances, mission locations, and market prices
+- `!item <name>` — Prime-item parts and relics, or regular-item drop and market information
+- `!wfhelp` — display the bot's built-in help message
+
+The bot reads its token from `Warframe/config.json` and starts from `warframe.js`.
+
+### `DGA` — lightweight server utility bot
+
+A simple prefix-command bot that demonstrates basic Discord automation:
+
+- Welcomes new members in a channel named `systeme`
+- `!ping` replies with `Pong!`
+- `!hello` greets the user who invoked the command
+
+The bot reads its token from `DGA/config.json` and starts from `DGA.js`.
+
+### `Wynncraft` — earlier experiments
+
+This directory contains earlier Wynncraft-focused experiments and utilities. It may not have the same setup or feature completeness as `wynncraft 2`; inspect its files before running it.
+
+## Requirements
+
+- [Node.js](https://nodejs.org/) 18 or newer is recommended
+- npm
+- A Discord application and bot token
+- Appropriate Discord intents and permissions for the bot you want to run
+
+Check the individual `package.json` files for each bot's dependencies. Do not run `npm install` from the repository root because there is no root-level application package.
+
+## Discord application setup
+
+For a new bot:
+
+1. Open the [Discord Developer Portal](https://discord.com/developers/applications).
+2. Create an application and open its **Bot** page.
+3. Add a bot and copy its token. Treat the token like a password.
+4. Enable the privileged intents required by the selected bot:
+   - **Message Content Intent** is required by the prefix-command bots.
+   - **Server Members Intent** is required by `DGA` for member-join welcome messages.
+5. Under **OAuth2 → URL Generator**, select the `bot` scope. For the slash-command bot, also select `applications.commands`.
+6. Grant only the permissions the bot needs. Typical permissions include **View Channels**, **Send Messages**, **Embed Links**, and **Read Message History**. The Wynncraft tracker also needs permission to pin or manage messages when using tracker commands.
+7. Open the generated invite URL and add the bot to your server.
+
+## Running a bot
+
+Clone the repository, then work inside the directory for the bot you want to run:
+
+```bash
+git clone https://github.com/tazerotu/Discord_Bot.git
+cd Discord_Bot
+```
+
+### Wynncraft bot
 
 ```bash
 cd "wynncraft 2"
@@ -30,29 +96,33 @@ npm install
 cp .env.example .env
 ```
 
-Then configure your environment:
+Set the values in `.env`:
 
 ```env
-DISCORD_TOKEN=your_discord_bot_token
+DISCORD_TOKEN=your_bot_token
 CLIENT_ID=your_discord_application_id
-TRACKER_CHANNEL_ID=optional_channel_id_for_live_tracker
+TRACKER_CHANNEL_ID=optional_channel_id
 ```
 
-Run:
+Start the bot with:
 
 ```bash
 node index.js
 ```
 
-### 2) Warframe bot (`Warframe`)
+For additional setup and command details, read [`wynncraft 2/README.md`](wynncraft%202/README.md).
 
-This bot queries Warframe wiki and market data to provide:
-- relic lookup
-- drop locations by mission
-- prime item information
-- market price summaries from Warframe.market
+### Warframe bot
 
-Run it from the `Warframe` folder:
+Create `Warframe/config.json` with your bot token:
+
+```json
+{
+  "token": "your_bot_token"
+}
+```
+
+Then install dependencies and start the bot:
 
 ```bash
 cd Warframe
@@ -60,13 +130,17 @@ npm install
 node warframe.js
 ```
 
-### 3) DGA bot (`DGA`)
+### DGA bot
 
-A lightweight server bot focused on simple Discord automation, including:
-- welcome messages for new users
-- basic prefix commands like `!ping` and `!hello`
+Create `DGA/config.json` with your bot token:
 
-Run it from the `DGA` folder:
+```json
+{
+  "token": "your_bot_token"
+}
+```
+
+Then install dependencies and start the bot:
 
 ```bash
 cd DGA
@@ -74,29 +148,50 @@ npm install
 node DGA.js
 ```
 
-## Requirements
+The welcome-message handler looks for a text channel named `systeme`. Create or rename the destination channel if you want that feature to send a message.
 
-- Node.js 18+
-- npm
-- a Discord bot token and application ID
-- optional environment file setup depending on the bot you are running
+## Security
 
-## Notes
+Never commit bot tokens, API credentials, or other secrets. This repository ignores the following paths:
 
-- Each directory is effectively its own project and has its own `package.json`.
-- The repository root is intentionally minimal and is not a single deployable app.
-- Some folders contain older or experimental code that may not be maintained as actively as the main Wynncraft project.
+- `config.json`
+- `.env`
+- `node_modules/`
+
+If a token is exposed, immediately reset it in the Discord Developer Portal. Keep local configuration files untracked and verify `git status` before committing.
+
+## Troubleshooting
+
+### The bot does not log in
+
+- Confirm the token is correct and has not been reset.
+- Confirm the configuration file is in the bot's directory and uses the expected key, `token`.
+- For `wynncraft 2`, confirm `.env` contains both `DISCORD_TOKEN` and `CLIENT_ID`.
+- Run `npm install` from the selected bot directory.
+
+### Prefix commands do not respond
+
+- Enable **Message Content Intent** in the Developer Portal.
+- Confirm the bot can view the channel and send messages.
+- Use the correct prefix: `!`.
+
+### DGA does not welcome new members
+
+- Enable **Server Members Intent**.
+- Confirm the server contains a channel named `systeme`.
+- Confirm the bot can view and send messages in that channel.
+
+### Wynncraft slash commands or tracker features do not work
+
+- Confirm the bot was invited with the `applications.commands` scope.
+- Check that `CLIENT_ID` matches the Discord application ID.
+- Verify the bot has the required channel permissions.
+- Review the detailed [`wynncraft 2/README.md`](wynncraft%202/README.md) for tracker and API-specific notes.
 
 ## Recommended starting point
 
-If you want to explore the most complete example, start with:
-
-```bash
-cd "wynncraft 2"
-```
-
-Then install dependencies, add the required environment variables, and run the bot.
+Start with `wynncraft 2` if you want the most feature-complete example. Start with `DGA` if you want the smallest example of Discord event handling and prefix commands.
 
 ## License
 
-This project is licensed under the MIT License. See `LICENSE` for more information.
+This project is licensed under the [MIT License](LICENSE).
